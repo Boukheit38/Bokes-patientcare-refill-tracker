@@ -1,81 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PatientCare | Refill Tracker</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PatientCare - Refill Management</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f5f9;
+    margin: 0;
+    padding: 20px;
+    color: #263238;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 20px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+h1 {
+    color: #087e8b;
+    text-align: center;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 7px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+button, .reminder-link {
+    display: inline-block;
+    padding: 11px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    font-size: 14px;
+}
+
+.register-btn {
+    width: 100%;
+    margin-top: 20px;
+    background: #087e8b;
+    color: white;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.card {
+    padding: 15px;
+    background: #e8f4f5;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.card h3 {
+    font-size: 28px;
+    margin: 8px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background: #087e8b;
+    color: white;
+}
+
+.overdue {
+    color: #c0392b;
+    font-weight: bold;
+}
+
+.due {
+    color: #d97706;
+    font-weight: bold;
+}
+
+.upcoming {
+    color: #087e8b;
+    font-weight: bold;
+}
+
+.later {
+    color: #555;
+}
+
+.whatsapp {
+    background: #25D366;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.sms {
+    background: #2874A6;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.delete-btn {
+    background: #c0392b;
+    color: white;
+}
+
+#message {
+    margin-top: 15px;
+    color: green;
+    font-weight: bold;
+}
+
+.action-buttons a,
+.action-buttons button {
+    display: block;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+@media(max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    th, td {
+        padding: 7px;
+        font-size: 12px;
+    }
+}
+</style>
 </head>
+
 <body>
 
-<header>
-    <h1>PatientCare</h1>
-    <p>Patient Follow-up & Medication Refill Tracker</p>
-</header>
+<div class="container">
 
-<main>
+<h1>PatientCare</h1>
 
-    <section class="welcome">
-        <h2>Patient Management Dashboard</h2>
-        <p>Monitor medication refills and patient follow-ups.</p>
-    </section>
+<p>Patient Registration and Medication Refill Tracker</p>
 
-    <section class="registration">
-        <h2>Register New Patient</h2>
+<h2>Register New Patient</h2>
 
-        <form id="patientForm">
+<form id="patientForm">
 
-            <label>Patient ID</label>
-            <input type="text" id="patientId"
-            placeholder="e.g. PT-001" required>
+<label>Patient ID</label>
+<input type="text" id="patientId" required>
 
-            <label>Patient Name</label>
-            <input type="text" id="patientName"
-            placeholder="Enter patient name" required>
+<label>Full Name</label>
+<input type="text" id="fullName" required>
 
-            <label>Phone Number</label>
-            <input type="tel" id="phone"
-            placeholder="e.g. 2547XXXXXXXX" required>
+<label>Phone Number</label>
+<input type="tel" id="phone" placeholder="0712345678" required>
 
-            <label>Medication</label>
-            <input type="text" id="medication"
-            placeholder="Enter medication name" required>
+<label>Medication Name</label>
+<input type="text" id="medication" required>
 
-            <label>Quantity Supplied (Days)</label>
-            <input type="number" id="days"
-            min="1" placeholder="e.g. 30" required>
+<label>Number of Days Supplied</label>
+<input type="number" id="days" min="1" step="1" required>
 
-            <label>Date Medication Supplied</label>
-            <input type="date" id="supplyDate" required>
+<label>Date Medication Was Supplied</label>
+<input type="date" id="supplyDate" required>
 
-            <label>Reminder Preference</label>
-            <select id="reminder">
-                <option value="Both">SMS and WhatsApp</option>
-                <option value="SMS">SMS only</option>
-                <option value="WhatsApp">WhatsApp only</option>
-            </select>
+<button type="submit" class="register-btn">
+Register Patient
+</button>
 
-            <button type="submit">Register Patient</button>
+</form>
 
-        </form>
-    </section>
+<div id="message" role="status"></div>
 
-    <section class="patient-list">
-        <h2>Registered Patients</h2>
+<hr>
 
-        <div id="patientList">
-            No patients registered yet.
-        </div>
-    </section>
+<h2>Refill Alert Dashboard</h2>
 
-</main>
+<div class="cards">
 
-<footer>
-    <p>PatientCare © 2026 | Healthcare Technology</p>
-    <p>Demonstration project – use fictional patient data.</p>
-</footer>
+<div class="card">
+Due Today
+<h3 id="dueToday">0</h3>
+</div>
 
-<script src="script.js"></script>
+<div class="card">
+Upcoming
+<h3 id="upcoming">0</h3>
+</div>
+
+<div class="card">
+Overdue
+<h3 id="overdue">0</h3>
+</div>
+
+<div class="card">
+Later
+<h3 id="later">0</h3>
+</div>
+
+</div>
+
+<h2>Registered Patients</h2>
+
+<p id="patientCount">Total Patients: 0</p>
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+<tr>
+<th>Patient ID</th>
+<th>Name</th>
+<th>Medication</th>
+<th>Refill Date</th>
+<th>Status</th>
+<th>Reminders / Action</th>
+</tr>
+</thead>
+
+<tbody id="patientList"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let patients = JSON.parse(
+    localStorage.getItem("patientCareRecords") || "[]"
+);
+
+const form = document.getElementById("patientForm");
+const patientList = document.getElementById("patientList");
+const message = document.getElementById("message");
+
+function calculateRefillDate(supplyDate, days) {
+
+    const date = new Date(supplyDate + "T12:00:00");
+
+    date.setDate(date.getDate() + Number(days));
+
+    return date;
+
+}
+
+function formatDate(date) {
+
+    return date.toLocaleDateString("en-GB");
+
+}
+
+function getRefillStatus(refillDate) {
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    const refill = new Date(refillDate);
+
+    refill.setHours(0, 0, 0, 0);
+
+    const difference = Math.round(
+        (refill - today) / (1000 * 60 * 60 * 24)
+    );
+
+    if (difference < 0) {
+        return {
+            name: "Overdue",
+            className: "overdue"
+        };
+    }
+
+    if (difference === 0) {
+        return {
+            name: "Due Today",
+            className: "due"
+        };
+    }
+
+    if (difference <= 7) {
+        return {
+            name: "Upcoming",
+            className: "upcoming"
+        };
+    }
+
+    return {
+        name: "Later",
+        className: "later"
+    };
+
+}
+
+function savePatients() {
+
+    localStorage.setItem(
+        "patientCareRecords",
+        JSON.stringify(patients)
+    );
+
+}
+
+function addCell(row, value, className = "") {
+
+    const cell = document.createElement("td");
+
+    cell.textContent = value;
+
+    if (className) {
+        cell.className = className;
+    }
+
+    row.appendChild(cell);
+
+}
+
+function displayPatients() {
+
+    patientList.innerHTML = "";
+
+    let counts = {
+        "Due Today": 0,
+        "Upcoming": 0,
+        "Overdue": 0,
+        "Later": 0
+    };
+
+    patients.forEach((patient, index) => {
+
+        const refillDate = calculateRefillDate(
+            patient.supplyDate,
+            patient.days
+        );
+
+        const status = getRefillStatus(refillDate);
+
+        counts[status.name]++;
+
+        const row = document.createElement("tr");
+
+        addCell(row, patient.id);
+        addCell(row, patient.name);
+        addCell(row, patient.medication);
+        addCell(row, formatDate(refillDate));
+        addCell(row, status.name, status.className);
+
+        const actionCell = document.createElement("td");
+
+        const actionButtons = document.createElement("div");
+
+        actionButtons.className = "action-buttons";
+
+        // Format Kenyan phone numbers
+        const phone = patient.phone.replace(/\D/g, "");
+
+        let whatsappNumber = phone;
+
+        if (phone.startsWith("0")) {
+            whatsappNumber = "254" + phone.substring(1);
+        } else if (phone.startsWith("7") || phone.startsWith("1")) {
+            whatsappNumber = "254" + phone;
+        }
+
+        const reminderMessage = encodeURIComponent(
+            "Hello " + patient.name +
+            ", this is a friendly reminder from PatientCare. " +
+            "Your medication refill appointment is due on " +
+            formatDate(refillDate) +
+            ". Please contact your healthcare provider. Thank you."
+        );
+
+        // WhatsApp reminder
+        const whatsappButton = document.createElement("a");
+
+        whatsappButton.textContent = "WhatsApp";
+
+        whatsappButton.href =
+            "https://wa.me/" + whatsappNumber +
+            "?text=" + reminderMessage;
+
+        whatsappButton.target = "_blank";
+        whatsappButton.rel = "noopener noreferrer";
+        whatsappButton.className = "reminder-link whatsapp";
+
+        // SMS reminder
+        const smsButton = document.createElement("a");
+
+        smsButton.textContent = "SMS";
+
+        smsButton.href =
+            "sms:" + phone + "?body=" + reminderMessage;
+
+        smsButton.className = "reminder-link sms";
+
+        // Delete record
+        const deleteButton = document.createElement("button");
+
+        deleteButton.textContent = "Delete";
+
+        deleteButton.className = "delete-btn";
+
+        deleteButton.addEventListener("click", function() {
+
+            if (confirm("Delete this test record?")) {
+
+                patients.splice(index, 1);
+
+                savePatients();
+
+                displayPatients();
+
+            }
+
+        });
+
+        actionButtons.appendChild(whatsappButton);
+        actionButtons.appendChild(smsButton);
+        actionButtons.appendChild(deleteButton);
+
+        actionCell.appendChild(actionButtons);
+
+        row.appendChild(actionCell);
+
+        patientList.appendChild(row);
+
+    });
+
+    document.getElementById("dueToday").textContent =
+        counts["Due Today"];
+
+    document.getElementById("upcoming").textContent =
+        counts["Upcoming"];
+
+    document.getElementById("overdue").textContent =
+        counts["Overdue"];
+
+    document.getElementById("later").textContent =
+        counts["Later"];
+
+    document.getElementById("patientCount").textContent =
+        "Total Patients: " + patients.length;
+
+}
+
+form.addEventListener("submit", function(event) {
+
+    event.preventDefault();
+
+    const patient = {
+
+        id: document.getElementById("patientId").value.trim(),
+
+        name: document.getElementById("fullName").value.trim(),
+
+        phone: document.getElementById("phone").value.trim(),
+
+        medication: document.getElementById("medication").value.trim(),
+
+        days: Number(document.getElementById("days").value),
+
+        supplyDate: document.getElementById("supplyDate").value
+
+    };
+
+    if (patients.some(p => p.id === patient.id)) {
+
+        message.textContent =
+            "This Patient ID already exists.";
+
+        return;
+
+    }
+
+    if (!Number.isInteger(patient.days) || patient.days < 1) {
+
+        message.textContent =
+            "Enter a valid number of days.";
+
+        return;
+
+    }
+
+    if (!/^(?:0\d{9}|254\d{9}|\+254\d{9})$/.test(patient.phone.replace(/\s/g, ""))) {
+
+        message.textContent =
+            "Enter a valid Kenyan phone number.";
+
+        return;
+
+    }
+
+    const refillDate = calculateRefillDate(
+        patient.supplyDate,
+        patient.days
+    );
+
+    patient.refillDate = refillDate.toISOString();
+
+    patients.push(patient);
+
+    savePatients();
+
+    displayPatients();
+
+    message.textContent =
+        "Patient registered successfully!";
+
+    form.reset();
+
+});
+
+displayPatients();
+
+</script>
 
 </body>
 </html>
