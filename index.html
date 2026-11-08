@@ -1,4 +1,3 @@
-index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,48 +8,74 @@ index.html
 </head>
 <body>
 
-    <header>
-        <h1>PatientCare</h1>
-        <p>Patient Follow-up & Medication Refill System</p>
-    </header>
+<header>
+    <h1>PatientCare</h1>
+    <p>Patient Follow-up & Medication Refill Tracker</p>
+</header>
 
-    <main>
-        <section class="welcome">
-            <h2>Welcome to PatientCare</h2>
-            <p>Helping healthcare workers track patients
-            and manage medication refills.</p>
-            <button onclick="showMessage()">
-                Get Started
-            </button>
-        </section>
+<main>
 
-        <section class="features">
-            <div class="card">
-                <h3>Patient Records</h3>
-                <p>Register and manage patients.</p>
-            </div>
+    <section class="welcome">
+        <h2>Patient Management Dashboard</h2>
+        <p>Monitor medication refills and patient follow-ups.</p>
+    </section>
 
-            <div class="card">
-                <h3>Refill Tracking</h3>
-                <p>Track upcoming medication refills.</p>
-            </div>
+    <section class="registration">
+        <h2>Register New Patient</h2>
 
-            <div class="card">
-                <h3>Reminders</h3>
-                <p>Help patients remember refill dates.</p>
-            </div>
+        <form id="patientForm">
 
-            <div class="card">
-                <h3>Follow-up</h3>
-                <p>Identify missed appointments and refills.</p>
-            </div>
-        </section>
-    </main>
+            <label>Patient ID</label>
+            <input type="text" id="patientId"
+            placeholder="e.g. PT-001" required>
 
-    <footer>
-        <p>PatientCare &copy; 2026 | Healthcare Technology</p>
-    </footer>
+            <label>Patient Name</label>
+            <input type="text" id="patientName"
+            placeholder="Enter patient name" required>
 
-    <script src="script.js"></script>
+            <label>Phone Number</label>
+            <input type="tel" id="phone"
+            placeholder="e.g. 2547XXXXXXXX" required>
+
+            <label>Medication</label>
+            <input type="text" id="medication"
+            placeholder="Enter medication name" required>
+
+            <label>Quantity Supplied (Days)</label>
+            <input type="number" id="days"
+            min="1" placeholder="e.g. 30" required>
+
+            <label>Date Medication Supplied</label>
+            <input type="date" id="supplyDate" required>
+
+            <label>Reminder Preference</label>
+            <select id="reminder">
+                <option value="Both">SMS and WhatsApp</option>
+                <option value="SMS">SMS only</option>
+                <option value="WhatsApp">WhatsApp only</option>
+            </select>
+
+            <button type="submit">Register Patient</button>
+
+        </form>
+    </section>
+
+    <section class="patient-list">
+        <h2>Registered Patients</h2>
+
+        <div id="patientList">
+            No patients registered yet.
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <p>PatientCare © 2026 | Healthcare Technology</p>
+    <p>Demonstration project – use fictional patient data.</p>
+</footer>
+
+<script src="script.js"></script>
+
 </body>
 </html>
