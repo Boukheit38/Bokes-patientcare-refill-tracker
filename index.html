@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>PatientCare - Refill Management</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -19,7 +21,7 @@ body {
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 20px auto;
     background: white;
     padding: 25px;
@@ -29,6 +31,10 @@ body {
 h1 {
     color: #087e8b;
     text-align: center;
+}
+
+h2 {
+    color: #087e8b;
 }
 
 label {
@@ -65,7 +71,7 @@ button, .reminder-link {
 
 .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 12px;
     margin: 20px 0;
 }
@@ -90,6 +96,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    min-width: 850px;
 }
 
 th, td {
@@ -122,6 +129,11 @@ th {
     color: #555;
 }
 
+.refilled {
+    color: #16834a;
+    font-weight: bold;
+}
+
 .whatsapp {
     background: #25D366;
     color: white;
@@ -130,6 +142,18 @@ th {
 
 .sms {
     background: #2874A6;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.refill-btn {
+    background: #087e8b;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.history-btn {
+    background: #6c5ce7;
     color: white;
     margin-bottom: 5px;
 }
@@ -152,7 +176,24 @@ th {
     margin-bottom: 6px;
 }
 
+.history-panel {
+    display: none;
+    background: #f0f5f9;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+.history-panel table {
+    min-width: 400px;
+}
+
+.history-panel th {
+    background: #526777;
+}
+
 @media(max-width: 600px) {
+
     .container {
         padding: 15px;
     }
@@ -161,7 +202,9 @@ th {
         padding: 7px;
         font-size: 12px;
     }
+
 }
+
 </style>
 </head>
 
@@ -172,6 +215,8 @@ th {
 <h1>PatientCare</h1>
 
 <p>Patient Registration and Medication Refill Tracker</p>
+
+<hr>
 
 <h2>Register New Patient</h2>
 
@@ -229,7 +274,14 @@ Later
 <h3 id="later">0</h3>
 </div>
 
+<div class="card">
+Refilled
+<h3 id="refilled">0</h3>
 </div>
+
+</div>
+
+<hr>
 
 <h2>Registered Patients</h2>
 
@@ -244,7 +296,8 @@ Later
 <th>Patient ID</th>
 <th>Name</th>
 <th>Medication</th>
-<th>Refill Date</th>
+<th>Days Supplied</th>
+<th>Next Refill Date</th>
 <th>Status</th>
 <th>Reminders / Action</th>
 </tr>
@@ -260,13 +313,33 @@ Later
 
 <script>
 
+// Load saved patients
+
 let patients = JSON.parse(
     localStorage.getItem("patientCareRecords") || "[]"
 );
 
 const form = document.getElementById("patientForm");
+
 const patientList = document.getElementById("patientList");
+
 const message = document.getElementById("message");
+
+
+// Get today's local date
+
+function getTodayString() {
+
+    const today = new Date();
+
+    return today.getFullYear() + "-" +
+        String(today.getMonth() + 1).padStart(2, "0") + "-" +
+        String(today.getDate()).padStart(2, "0");
+
+}
+
+
+// Calculate refill date
 
 function calculateRefillDate(supplyDate, days) {
 
@@ -278,13 +351,30 @@ function calculateRefillDate(supplyDate, days) {
 
 }
 
+
+// Format date
+
 function formatDate(date) {
 
     return date.toLocaleDateString("en-GB");
 
 }
 
-function getRefillStatus(refillDate) {
+
+// Get refill status
+
+function getRefillStatus(patient, refillDate) {
+
+    // Refilled only when manually confirmed today
+
+    if (patient.lastRefillDate === getTodayString()) {
+
+        return {
+            name: "Refilled",
+            className: "refilled"
+        };
+
+    }
 
     const today = new Date();
 
@@ -299,24 +389,30 @@ function getRefillStatus(refillDate) {
     );
 
     if (difference < 0) {
+
         return {
             name: "Overdue",
             className: "overdue"
         };
+
     }
 
     if (difference === 0) {
+
         return {
             name: "Due Today",
             className: "due"
         };
+
     }
 
     if (difference <= 7) {
+
         return {
             name: "Upcoming",
             className: "upcoming"
         };
+
     }
 
     return {
@@ -326,6 +422,9 @@ function getRefillStatus(refillDate) {
 
 }
 
+
+// Save patients
+
 function savePatients() {
 
     localStorage.setItem(
@@ -334,6 +433,9 @@ function savePatients() {
     );
 
 }
+
+
+// Add table cell
 
 function addCell(row, value, className = "") {
 
@@ -349,15 +451,119 @@ function addCell(row, value, className = "") {
 
 }
 
+
+// MANUAL MEDICATION REFILL FUNCTION
+
+function refillMedication(index) {
+
+    const patient = patients[index];
+
+    if (!confirm(
+        "Confirm that " + patient.name +
+        " has actually received the medication?"
+    )) {
+
+        return;
+
+    }
+
+    // Record date manually confirmed by staff
+
+    const supplyDate = getTodayString();
+
+    // Ensure refill history exists
+
+    if (!Array.isArray(patient.history)) {
+
+        patient.history = [];
+
+        patient.history.push({
+
+            supplyDate: patient.supplyDate,
+
+            days: patient.days,
+
+            refillDate: calculateRefillDate(
+                patient.supplyDate,
+                patient.days
+            ).toISOString()
+
+        });
+
+    }
+
+    // Calculate next refill date
+
+    const nextRefill = calculateRefillDate(
+        supplyDate,
+        patient.days
+    );
+
+    // Record new medication supply
+
+    patient.history.push({
+
+        supplyDate: supplyDate,
+
+        days: patient.days,
+
+        refillDate: nextRefill.toISOString()
+
+    });
+
+    // Update current patient information
+
+    patient.supplyDate = supplyDate;
+
+    patient.refillDate = nextRefill.toISOString();
+
+    patient.lastRefillDate = supplyDate;
+
+    // Save updated records
+
+    savePatients();
+
+    // Refresh dashboard and patient table
+
+    displayPatients();
+
+    message.textContent =
+        "Refill successfully recorded for " +
+        patient.name +
+        ". Next refill date: " +
+        formatDate(nextRefill);
+
+}
+
+
+// Show refill history
+
+function toggleHistory(index) {
+
+    const panel = document.getElementById(
+        "history-" + index
+    );
+
+    panel.style.display =
+        panel.style.display === "block" ? "none" : "block";
+
+}
+
+
+// Display patients
+
 function displayPatients() {
 
     patientList.innerHTML = "";
 
     let counts = {
+
         "Due Today": 0,
         "Upcoming": 0,
         "Overdue": 0,
-        "Later": 0
+        "Later": 0,
+        "Refilled": 0
+
     };
 
     patients.forEach((patient, index) => {
@@ -367,17 +573,25 @@ function displayPatients() {
             patient.days
         );
 
-        const status = getRefillStatus(refillDate);
+        const status = getRefillStatus(patient, refillDate);
 
         counts[status.name]++;
+
 
         const row = document.createElement("tr");
 
         addCell(row, patient.id);
+
         addCell(row, patient.name);
+
         addCell(row, patient.medication);
+
+        addCell(row, patient.days + " days");
+
         addCell(row, formatDate(refillDate));
+
         addCell(row, status.name, status.className);
+
 
         const actionCell = document.createElement("td");
 
@@ -385,26 +599,45 @@ function displayPatients() {
 
         actionButtons.className = "action-buttons";
 
+
         // Format Kenyan phone numbers
+
         const phone = patient.phone.replace(/\D/g, "");
 
         let whatsappNumber = phone;
 
         if (phone.startsWith("0")) {
+
             whatsappNumber = "254" + phone.substring(1);
-        } else if (phone.startsWith("7") || phone.startsWith("1")) {
+
+        } else if (
+            phone.startsWith("7") || phone.startsWith("1")
+        ) {
+
             whatsappNumber = "254" + phone;
+
         }
 
+
+        // Reminder message
+
         const reminderMessage = encodeURIComponent(
+
             "Hello " + patient.name +
+
             ", this is a friendly reminder from PatientCare. " +
-            "Your medication refill appointment is due on " +
+
+            "Your medication refill is due on " +
+
             formatDate(refillDate) +
+
             ". Please contact your healthcare provider. Thank you."
+
         );
 
-        // WhatsApp reminder
+
+        // WhatsApp button
+
         const whatsappButton = document.createElement("a");
 
         whatsappButton.textContent = "WhatsApp";
@@ -414,10 +647,15 @@ function displayPatients() {
             "?text=" + reminderMessage;
 
         whatsappButton.target = "_blank";
-        whatsappButton.rel = "noopener noreferrer";
-        whatsappButton.className = "reminder-link whatsapp";
 
-        // SMS reminder
+        whatsappButton.rel = "noopener noreferrer";
+
+        whatsappButton.className =
+            "reminder-link whatsapp";
+
+
+        // SMS button
+
         const smsButton = document.createElement("a");
 
         smsButton.textContent = "SMS";
@@ -427,7 +665,55 @@ function displayPatients() {
 
         smsButton.className = "reminder-link sms";
 
-        // Delete record
+
+        // Manual refill button
+
+        const refillButton = document.createElement("button");
+
+        refillButton.textContent =
+            patient.lastRefillDate === getTodayString()
+            ? "Refill Recorded Today"
+            : "Medication Refilled";
+
+        refillButton.className = "refill-btn";
+
+        // Prevent duplicate refill confirmation on the same day
+
+        refillButton.disabled =
+            patient.lastRefillDate === getTodayString();
+
+        if (refillButton.disabled) {
+
+            refillButton.style.opacity = "0.6";
+
+            refillButton.style.cursor = "not-allowed";
+
+        }
+
+        refillButton.addEventListener("click", function() {
+
+            refillMedication(index);
+
+        });
+
+
+        // Refill history button
+
+        const historyButton = document.createElement("button");
+
+        historyButton.textContent = "Refill History";
+
+        historyButton.className = "history-btn";
+
+        historyButton.addEventListener("click", function() {
+
+            toggleHistory(index);
+
+        });
+
+
+        // Delete button
+
         const deleteButton = document.createElement("button");
 
         deleteButton.textContent = "Delete";
@@ -436,7 +722,7 @@ function displayPatients() {
 
         deleteButton.addEventListener("click", function() {
 
-            if (confirm("Delete this test record?")) {
+            if (confirm("Delete this patient record?")) {
 
                 patients.splice(index, 1);
 
@@ -444,13 +730,26 @@ function displayPatients() {
 
                 displayPatients();
 
+                message.textContent =
+                    "Patient record deleted successfully.";
+
             }
 
         });
 
+
+        // Append action buttons
+
         actionButtons.appendChild(whatsappButton);
+
         actionButtons.appendChild(smsButton);
+
+        actionButtons.appendChild(refillButton);
+
+        actionButtons.appendChild(historyButton);
+
         actionButtons.appendChild(deleteButton);
+
 
         actionCell.appendChild(actionButtons);
 
@@ -458,7 +757,106 @@ function displayPatients() {
 
         patientList.appendChild(row);
 
+
+        // Refill history section
+
+        const historyRow = document.createElement("tr");
+
+        const historyCell = document.createElement("td");
+
+        historyCell.colSpan = 7;
+
+        const historyPanel = document.createElement("div");
+
+        historyPanel.id = "history-" + index;
+
+        historyPanel.className = "history-panel";
+
+
+        const historyTitle = document.createElement("h3");
+
+        historyTitle.textContent =
+            "Refill History - " + patient.name;
+
+        historyPanel.appendChild(historyTitle);
+
+
+        const historyTable = document.createElement("table");
+
+        const historyHead = document.createElement("thead");
+
+        const headRow = document.createElement("tr");
+
+
+        [
+            "Refill Number",
+            "Supply Date",
+            "Days Supplied",
+            "Next Refill Date"
+        ].forEach(function(title) {
+
+            const th = document.createElement("th");
+
+            th.textContent = title;
+
+            headRow.appendChild(th);
+
+        });
+
+
+        historyHead.appendChild(headRow);
+
+        historyTable.appendChild(historyHead);
+
+
+        const historyBody = document.createElement("tbody");
+
+        const historyRecords = Array.isArray(patient.history)
+            ? patient.history
+            : [{
+                supplyDate: patient.supplyDate,
+                days: patient.days,
+                refillDate: refillDate.toISOString()
+            }];
+
+
+        historyRecords.forEach(function(record, historyIndex) {
+
+            const historyRecordRow = document.createElement("tr");
+
+            addCell(historyRecordRow, historyIndex + 1);
+
+            addCell(
+                historyRecordRow,
+                formatDate(new Date(record.supplyDate + "T12:00:00"))
+            );
+
+            addCell(historyRecordRow, record.days + " days");
+
+            addCell(
+                historyRecordRow,
+                formatDate(new Date(record.refillDate))
+            );
+
+            historyBody.appendChild(historyRecordRow);
+
+        });
+
+
+        historyTable.appendChild(historyBody);
+
+        historyPanel.appendChild(historyTable);
+
+        historyCell.appendChild(historyPanel);
+
+        historyRow.appendChild(historyCell);
+
+        patientList.appendChild(historyRow);
+
     });
+
+
+    // Update dashboard
 
     document.getElementById("dueToday").textContent =
         counts["Due Today"];
@@ -472,10 +870,19 @@ function displayPatients() {
     document.getElementById("later").textContent =
         counts["Later"];
 
+    document.getElementById("refilled").textContent =
+        counts["Refilled"];
+
+
+    // Total patients
+
     document.getElementById("patientCount").textContent =
         "Total Patients: " + patients.length;
 
 }
+
+
+// Register new patient
 
 form.addEventListener("submit", function(event) {
 
@@ -493,9 +900,16 @@ form.addEventListener("submit", function(event) {
 
         days: Number(document.getElementById("days").value),
 
-        supplyDate: document.getElementById("supplyDate").value
+        supplyDate: document.getElementById("supplyDate").value,
+
+        history: [],
+
+        lastRefillDate: null
 
     };
+
+
+    // Check duplicate Patient ID
 
     if (patients.some(p => p.id === patient.id)) {
 
@@ -506,6 +920,9 @@ form.addEventListener("submit", function(event) {
 
     }
 
+
+    // Validate number of days
+
     if (!Number.isInteger(patient.days) || patient.days < 1) {
 
         message.textContent =
@@ -515,7 +932,12 @@ form.addEventListener("submit", function(event) {
 
     }
 
-    if (!/^(?:0\d{9}|254\d{9}|\+254\d{9})$/.test(patient.phone.replace(/\s/g, ""))) {
+
+    // Validate Kenyan phone number
+
+    if (!/^(?:0\d{9}|254\d{9}|\+254\d{9})$/.test(
+        patient.phone.replace(/\s/g, "")
+    )) {
 
         message.textContent =
             "Enter a valid Kenyan phone number.";
@@ -524,12 +946,44 @@ form.addEventListener("submit", function(event) {
 
     }
 
+
+    // Validate supply date
+
+    if (!patient.supplyDate ||
+        isNaN(new Date(patient.supplyDate + "T12:00:00").getTime())) {
+
+        message.textContent =
+            "Enter a valid medication supply date.";
+
+        return;
+
+    }
+
+
+    // Calculate first refill date
+
     const refillDate = calculateRefillDate(
         patient.supplyDate,
         patient.days
     );
 
     patient.refillDate = refillDate.toISOString();
+
+
+    // Save first supply in history
+
+    patient.history.push({
+
+        supplyDate: patient.supplyDate,
+
+        days: patient.days,
+
+        refillDate: patient.refillDate
+
+    });
+
+
+    // Add patient
 
     patients.push(patient);
 
@@ -543,6 +997,9 @@ form.addEventListener("submit", function(event) {
     form.reset();
 
 });
+
+
+// Display saved patients when page loads
 
 displayPatients();
 
